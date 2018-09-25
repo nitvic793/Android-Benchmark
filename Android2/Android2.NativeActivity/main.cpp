@@ -18,6 +18,9 @@
 #include <exception>
 #include "AGestureDetector.h"
 #include "Benchmarks.h"
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 /**
 * Our saved state data.
@@ -45,6 +48,7 @@ struct AndroidInstance {
 	struct saved_state state;
 };
 
+struct android_app* androidState;
 
 /**
 * Process the next input event.
@@ -56,8 +60,6 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 		engine->state.y = AMotionEvent_getY(event, 0);
 		if (engine->gestureDetector->DetectTap(event) == GESTURE_STATE_ACTION) {
 			LOGI("Test Tap");
-			//BenchmarkL1ToCPU();
-			//std::terminate();
 		}
 		return 1;
 	}
@@ -108,6 +110,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
 		engine->animating = 0;
 		//engine_draw_frame(engine);
 		break;
+
 	}
 }
 
@@ -118,7 +121,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
 */
 void android_main(struct android_app* state) {
 	struct AndroidInstance engine;
-
+	androidState = state;
 	memset(&engine, 0, sizeof(engine));
 	state->userData = &engine;
 	state->onAppCmd = engine_handle_cmd;
@@ -139,12 +142,29 @@ void android_main(struct android_app* state) {
 		// We are starting with a previous saved state; restore from it.
 		engine.state = *(struct saved_state*)state->savedState;
 	}
-
+	bool startRunning = false;
+	std::mutex mutex;
+	std::condition_variable cond_var;
 	engine.animating = 1;
+	
+	std::thread th([&]() {
+		{
+			std::unique_lock<std::mutex> l(mutex);
 
+			while (!startRunning)
+			{
+				cond_var.wait(l);
+			}
+		}
+		double benchmarkTime[3] = { 0.0 };
+		benchmarkTime[0] = BenchmarkL1ToCPU();
+		benchmarkTime[1] = BenchmarkL2ToCPU();
+		benchmarkTime[2] = BenchmarkMainMemToCPU();
+		ANativeActivity_finish(state->activity);
+	});
 	// loop waiting for stuff to do.
-
-	while (1) {
+	
+	while (true) {
 		// Read all pending events.
 		int ident;
 		int events;
@@ -174,7 +194,6 @@ void android_main(struct android_app* state) {
 				}
 
 			}
-
 		}
 
 		if (engine.animating) {
@@ -183,6 +202,12 @@ void android_main(struct android_app* state) {
 			if (engine.state.angle > 1) {
 				engine.state.angle = 0;
 			}
+		}
+
+		{
+			std::lock_guard<std::mutex> l(mutex);
+			startRunning = true;
+			cond_var.notify_one();
 		}
 	}
 }

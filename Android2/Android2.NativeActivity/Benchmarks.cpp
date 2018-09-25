@@ -7,13 +7,19 @@
 #include <random>
 
 
-void BenchmarkL2ToCPU()
-{
-}
+#ifndef L1_SIZE
+#define L1_SIZE 24 // 24 KB
+#endif
 
-void BenchmarkMainMemToCPU()
-{
-}
+#ifndef L2_SIZE
+#define L2_SIZE 2400 // 2400 KB - 2.4 MB. Fits within 4MB of L2 cache
+#endif
+
+#ifndef MAIN_SIZE
+#define MAIN_SIZE 24000 // 24000 KB - 24 MB. Large enough to hit the main memory
+#endif
+
+
 
 /* simple class for a pseudo-random generator producing
 uniformely distributed integers */
@@ -124,22 +130,37 @@ void** create_random_chain(std::size_t size) {
 }
 
 int64_t chase_pointers(void** memory, std::size_t count) {
-	//auto start = std::chrono::high_resolution_clock::now();
+	auto start = std::chrono::high_resolution_clock::now();
 	void** p = (void**)memory;
 	while (count-- > 0) {
 		p = (void**)*p;
 	}
-	return 0;
-	//auto finish = std::chrono::high_resolution_clock::now();
-	//return std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count();
+	auto finish = std::chrono::high_resolution_clock::now();
+	return std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count();
+	//return 0;
 }
 
-void BenchmarkL1ToCPU()
-{
-	size_t byteSize = 24000 * 1024; //24 KB
+double Benchmark(unsigned int sizeInKB) {
+	size_t byteSize = sizeInKB * 1024; //24 KB
 	size_t stride = 4;// sizeof(void*);
 	std::size_t count = (std::size_t) 1 << 30;
 	void **memory = create_random_chain(byteSize);
-	/*auto timeTaken = chase_pointers(memory, count);
-	auto avgtimeTaken = (double)timeTaken / (double)count;*/
+	auto timeTaken = chase_pointers(memory, count);
+	auto avgtimeTaken = (double)timeTaken / (double)count;
+	return avgtimeTaken;
+}
+
+double BenchmarkL1ToCPU()
+{
+	return Benchmark(L1_SIZE);
+}
+
+double BenchmarkL2ToCPU()
+{
+	return Benchmark(L2_SIZE);
+}
+
+double BenchmarkMainMemToCPU()
+{
+	return Benchmark(MAIN_SIZE);
 }

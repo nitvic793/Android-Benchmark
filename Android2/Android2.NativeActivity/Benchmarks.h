@@ -1,8 +1,8 @@
 #pragma once
 
 
-void BenchmarkL1ToCPU(); 
+double BenchmarkL1ToCPU(); 
 
-void BenchmarkL2ToCPU(); 
+double BenchmarkL2ToCPU();
 
-void BenchmarkMainMemToCPU();
+double BenchmarkMainMemToCPU();

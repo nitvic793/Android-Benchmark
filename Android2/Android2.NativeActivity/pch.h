@@ -12,6 +12,7 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <string>
 #include <sys/resource.h>
 
 #include <EGL/egl.h>
