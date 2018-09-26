@@ -1,3 +1,7 @@
+///
+/// Pointer chasing random chain Credits: https://github.com/afborchert/pointer-chasing
+///
+
 #include "Benchmarks.h"
 #include <malloc.h>
 #include <typeinfo>
@@ -72,37 +76,6 @@ static void gen_bit_reversal_permutation(unsigned int* seq,
 	}
 }
 
-/* create a cyclic pointer chain where the individual locations
-are stride bytes apart */
-void** create_linear_chain(std::size_t size, std::size_t stride) {
-	std::size_t len = size / sizeof(void*);
-	void** memory = new void*[len];
-
-	unsigned int runs = stride / sizeof(void*);
-	unsigned int bits = log2(runs);
-	if ((1 << bits) != runs) ++bits;
-	unsigned int* offset = new unsigned int[1 << bits];
-	gen_bit_reversal_permutation(offset, bits, runs);
-
-	/* generate the actual pointer chain */
-	unsigned int run = 0;
-	void** last = NULL;
-	for (unsigned int run = 0; run < runs; ++run) {
-		char* next = (char*)memory + offset[run] * sizeof(void*);
-		if (last) {
-			*last = (void*)next;
-		}
-		last = (void**)next;
-		for (;;) {
-			char* next = (char*)last + stride;
-			if (next >= (char*)memory + size) break;
-			*last = (void*)next; last = (void**)next;
-		}
-	}
-	*last = (void*)memory; // close the cycle 
-	return memory;
-}
-
 void** create_random_chain(std::size_t size) {
 	std::size_t len = size / sizeof(void*);
 	void** memory = new void*[len];
@@ -141,9 +114,9 @@ int64_t chase_pointers(void** memory, std::size_t count) {
 }
 
 double Benchmark(unsigned int sizeInKB) {
-	size_t byteSize = sizeInKB * 1024; //24 KB
+	size_t byteSize = sizeInKB * 1024; 
 	size_t stride = 4;// sizeof(void*);
-	std::size_t count = (std::size_t) 1 << 30;
+	std::size_t count = 10000000;// (std::size_t) 1 << 30;
 	void **memory = create_random_chain(byteSize);
 	auto timeTaken = chase_pointers(memory, count);
 	auto avgtimeTaken = (double)timeTaken / (double)count;
