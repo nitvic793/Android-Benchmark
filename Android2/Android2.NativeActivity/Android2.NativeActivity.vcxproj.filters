@@ -3,13 +3,11 @@
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="android_native_app_glue.h" />
-    <ClInclude Include="AGestureDetector.h" />
-    <ClInclude Include="Benchmarks.h" />
+    <ClInclude Include="Benchmark\Benchmarks.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="android_native_app_glue.c" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="AGestureDetector.cpp" />
-    <ClCompile Include="Benchmarks.cpp" />
+    <ClCompile Include="Benchmark\Benchmarks.cpp" />
   </ItemGroup>
 </Project>

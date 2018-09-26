@@ -1,5 +1,8 @@
 ///
-/// Pointer chasing random chain Credits: https://github.com/afborchert/pointer-chasing
+/// Pointer chasing random chain 
+/// Credits: https://github.com/afborchert/pointer-chasing
+/// Copyright (c) 2016 Andreas F. Borchert
+/// MIT License can be found in "Benchmark" folder. 
 ///
 
 #include "Benchmarks.h"
@@ -110,13 +113,12 @@ int64_t chase_pointers(void** memory, std::size_t count) {
 	}
 	auto finish = std::chrono::high_resolution_clock::now();
 	return std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count();
-	//return 0;
 }
 
 double Benchmark(unsigned int sizeInKB) {
 	size_t byteSize = sizeInKB * 1024; 
-	size_t stride = 4;// sizeof(void*);
-	std::size_t count = 10000000;// (std::size_t) 1 << 30;
+	size_t stride = 4;
+	std::size_t count = 10000000;
 	void **memory = create_random_chain(byteSize);
 	auto timeTaken = chase_pointers(memory, count);
 	auto avgtimeTaken = (double)timeTaken / (double)count;

@@ -16,8 +16,7 @@
 */
 
 #include <exception>
-#include "AGestureDetector.h"
-#include "Benchmarks.h"
+#include "Benchmark/Benchmarks.h"
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -40,7 +39,6 @@ struct AndroidInstance {
 	ASensorManager* sensorManager;
 	const ASensor* accelerometerSensor;
 	ASensorEventQueue* sensorEventQueue;
-	AGestureDetector* gestureDetector;
 
 	int animating;
 	int32_t width;
@@ -58,9 +56,6 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 	if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
 		engine->state.x = AMotionEvent_getX(event, 0);
 		engine->state.y = AMotionEvent_getY(event, 0);
-		if (engine->gestureDetector->DetectTap(event) == GESTURE_STATE_ACTION) {
-			LOGI("Test Tap");
-		}
 		return 1;
 	}
 	return 0;
@@ -80,14 +75,8 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
 		break;
 	case APP_CMD_INIT_WINDOW:
 		// The window is being shown, get it ready.
-		if (engine->app->window != NULL) {
-			//engine_init_display(engine);
-			//engine_draw_frame(engine);
-		}
 		break;
 	case APP_CMD_TERM_WINDOW:
-		// The window is being hidden or closed, clean it up.
-		//engine_term_display(engine);
 		break;
 	case APP_CMD_GAINED_FOCUS:
 		// When our app gains focus, we start monitoring the accelerometer.
@@ -108,7 +97,6 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
 		}
 		// Also stop animating.
 		engine->animating = 0;
-		//engine_draw_frame(engine);
 		break;
 
 	}
@@ -130,13 +118,11 @@ void android_main(struct android_app* state) {
 
 	// Prepare to monitor accelerometer
 	engine.sensorManager = ASensorManager_getInstance();
-	
+
 	engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
 		ASENSOR_TYPE_ACCELEROMETER);
 	engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager,
 		state->looper, LOOPER_ID_USER, NULL, NULL);
-
-	engine.gestureDetector = new AGestureDetector();
 
 	if (state->savedState != NULL) {
 		// We are starting with a previous saved state; restore from it.
@@ -146,7 +132,7 @@ void android_main(struct android_app* state) {
 	std::mutex mutex;
 	std::condition_variable cond_var;
 	engine.animating = 1;
-	
+
 	std::thread th([&]() {
 		{
 			std::unique_lock<std::mutex> l(mutex);
@@ -164,7 +150,7 @@ void android_main(struct android_app* state) {
 		ANativeActivity_finish(state->activity);
 	});
 	// loop waiting for stuff to do.
-	
+
 	while (true) {
 		//// Read all pending events.
 		int ident;
@@ -175,15 +161,16 @@ void android_main(struct android_app* state) {
 			(void**)&source)) >= 0) {
 
 			// Process this event.
-			if (source != NULL) 
+			if (source != NULL)
 			{
 				source->process(state, source);
 			}
 
-		{
-			std::lock_guard<std::mutex> l(mutex);
-			startRunning = true;
-			cond_var.notify_one();
+			{
+				std::lock_guard<std::mutex> l(mutex);
+				startRunning = true;
+				cond_var.notify_one();
+			}
 		}
 	}
 }

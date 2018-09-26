@@ -207,15 +207,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AGestureDetector.h" />
-    <ClInclude Include="Benchmarks.h" />
+    <ClInclude Include="Benchmark\Benchmarks.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="android_native_app_glue.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AGestureDetector.cpp" />
     <ClCompile Include="android_native_app_glue.c" />
-    <ClCompile Include="Benchmarks.cpp" />
+    <ClCompile Include="Benchmark\Benchmarks.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
